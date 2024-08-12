@@ -5,6 +5,7 @@ from flask_restful import Api
 from sqlalchemy import MetaData
 from config import Config
 from flask_bcrypt import Bcrypt
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -22,5 +23,6 @@ bcrypt = Bcrypt(app)
 # Instantiate REST API
 api = Api(app)
 
+CORS(app)
 
 from app import models, routes
