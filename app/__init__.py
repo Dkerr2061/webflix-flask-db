@@ -13,7 +13,8 @@ metadata = MetaData(
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     }
 )
-db = SQLAlchemy(metadata=metadata)
+db = SQLAlchemy(app, metadata=metadata)
 migrate = Migrate(app, db)
+
 
 from app import models, routes
