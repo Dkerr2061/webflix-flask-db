@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from app import app
 
 # Load environment variables from .env file
 load_dotenv()
@@ -7,5 +8,5 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
