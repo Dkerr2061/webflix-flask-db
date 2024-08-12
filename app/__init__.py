@@ -19,5 +19,8 @@ migrate = Migrate(app, db)
 
 bcrypt = Bcrypt(app)
 
+# Instantiate REST API
+api = Api(app)
+
 
 from app import models, routes
