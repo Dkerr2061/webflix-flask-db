@@ -23,6 +23,6 @@ bcrypt = Bcrypt(app)
 # Instantiate REST API
 api = Api(app)
 
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
 
 from app import models, routes
