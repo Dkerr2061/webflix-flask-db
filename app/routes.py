@@ -3,6 +3,7 @@
 # Standard library imports
 
 # Remote library imports
+from email.mime import image
 from flask import request, make_response, session
 from flask_restful import Resource
 
@@ -11,7 +12,7 @@ from app import app, db, api, bcrypt
 from flask import render_template
 
 # Add your model imports
-from app.models import User, Movie, CartItem, Review
+from app.models import User, Movie, CartItem, Review, Artists, Albums, AlbumReviews
 
 
 # Views go here!
@@ -583,6 +584,33 @@ class Signup(Resource):
 
 api.add_resource(Signup, "/signup")
 
+# ------------------------------------------------------------------------
+
+
+class AllArtists(Resource):
+    def get(self):
+        artists = Artists.query.all()
+        body = [artist.to_dict(only=("id", "name", "image")) for artist in artists]
+        return make_response(body, 200)
+
+    def post(self):
+        try:
+            new_artist = Artists(
+                name=request.json.get("name"), image=request.json.get("image")
+            )
+            db.session.add(new_artist)
+            db.session.commit()
+
+            body = new_artist.to_dict(only=("id", "name", "image"))
+            return make_response(body, 201)
+        except:
+            body = {
+                "error": "Artist's name must be unique and both name and image fields must be completed."
+            }
+            return make_response(body, 400)
+
+
+api.add_resource(AllArtists, "/artists")
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True)

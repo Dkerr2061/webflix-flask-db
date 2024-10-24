@@ -114,3 +114,41 @@ class Review(db.Model, SerializerMixin):
             raise ValueError(f"{key} must be an Integer.")
         else:
             return value
+
+
+# ------------------------------------------------------------------------
+
+
+class Artists(db.Model, SerializerMixin):
+    __tablename__ = "artists"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+    image = db.Column(db.String, nullable=False)
+
+
+# ------------------------------------------------------------------------
+
+
+class Albums(db.Model, SerializerMixin):
+    __tablename__ = "albums"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
+    year = db.Column(db.Integer, nullable=False)
+    song = db.Column(db.String, nullable=False)
+    artist_name = db.Column(db.String, nullable=False)
+
+
+# ------------------------------------------------------------------------
+
+
+class AlbumReviews(db.Model, SerializerMixin):
+    __tablename__ = "albumreviews"
+
+    id = db.Column(db.Integer, primary_key=True)
+    rating = db.Column(db.Integer)
+    text = db.Column(db.String)
+
+    artist_id = db.Column(db.Integer, db.ForeignKey("artists.id"))
+    album_id = db.Column(db.Integer, db.ForeignKey("albums.id"))
