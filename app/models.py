@@ -126,6 +126,22 @@ class Artists(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False, unique=True)
     image = db.Column(db.String, nullable=False)
 
+    # 1-to-many relationship between the artists and albumreviews tables
+    artist_reviews = db.relationship(
+        "AlbumReviews", back_populates="artist", cascade="all"
+    )
+
+    album_association = association_proxy(
+        "artist_reviews", "album", creator=lambda a: AlbumReviews(album=a)
+    )
+
+    @validates("name", "image")
+    def validate_name_and_image(self, key, value):
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be a string value.")
+        else:
+            return value
+
 
 # ------------------------------------------------------------------------
 
@@ -138,6 +154,29 @@ class Albums(db.Model, SerializerMixin):
     year = db.Column(db.Integer, nullable=False)
     song = db.Column(db.String, nullable=False)
     artist_name = db.Column(db.String, nullable=False)
+
+    # 1-to-many relationship between the albums and albumreviews tables.
+    album_reviews = db.relationship(
+        "AlbumReviews", back_populates="album", cascade="all"
+    )
+
+    artist_association = association_proxy(
+        "album_reviews", "artist", creator=lambda ar: AlbumReviews(artist=ar)
+    )
+
+    @validates("name", "song", "artist_name")
+    def validate_strings(self, key, value):
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be a string!")
+        else:
+            return value
+
+    @validates("year")
+    def validate_year(self, key, value):
+        if not (isinstance(value, int)) and (len(value) == 4):
+            raise ValueError("Year must be a number 4 characters long.")
+        else:
+            return value
 
 
 # ------------------------------------------------------------------------
@@ -152,3 +191,13 @@ class AlbumReviews(db.Model, SerializerMixin):
 
     artist_id = db.Column(db.Integer, db.ForeignKey("artists.id"))
     album_id = db.Column(db.Integer, db.ForeignKey("albums.id"))
+
+    artist = db.relationship("Artists", back_populates="artist_reviews")
+    album = db.relationship("Albums", back_populates="album_reviews")
+
+    @validates("rating")
+    def validate_rating(self, key, value):
+        if not (isinstance(value, int)) and (1 <= len(value) <= 10):
+            raise ValueError("Rating must be a number between 1 and 10.")
+        else:
+            return value

@@ -590,7 +590,8 @@ api.add_resource(Signup, "/signup")
 class AllArtists(Resource):
     def get(self):
         artists = Artists.query.all()
-        body = [artist.to_dict(only=("id", "name", "image")) for artist in artists]
+
+        body = [artist.to_dict(rules=("-artist_reviews",)) for artist in artists]
         return make_response(body, 200)
 
     def post(self):
@@ -601,7 +602,7 @@ class AllArtists(Resource):
             db.session.add(new_artist)
             db.session.commit()
 
-            body = new_artist.to_dict(only=("id", "name", "image"))
+            body = new_artist.to_dict(rules=("-artist_reviews",))
             return make_response(body, 201)
         except:
             body = {
@@ -611,6 +612,216 @@ class AllArtists(Resource):
 
 
 api.add_resource(AllArtists, "/artists")
+
+
+class ArtistByID(Resource):
+
+    def get(self, id):
+        artist = db.session.get(Artists, id)
+        if artist:
+            body = artist.to_dict(rules=("-artist_reviews",))
+            body["album_association"] = [
+                album.to_dict(rules=("-album_reviews",))
+                for album in artist.album_association
+            ]
+            return make_response(body, 200)
+        else:
+            body = {"error": f"Artist {id} was not found."}
+            return make_response(body, 400)
+
+    def patch(self, id):
+        artist = db.session.get(Artists, id)
+        if artist:
+            try:
+                for attr in request.json:
+                    setattr(artist, attr, request.json[attr])
+                db.session.commit()
+                body = artist.to_dict(rules=("-artist_reviews",))
+                return make_response(body, 201)
+            except:
+                body = {"error": "Artist could not be updated."}
+                return make_response(body, 400)
+        else:
+            body = {"error": f"Artist {id} could not be updated"}
+            return make_response(body, 400)
+
+    def delete(self, id):
+        artist = db.session.get(Artists, id)
+        if artist:
+            db.session.delete(artist)
+            db.session.commit()
+            body = {}
+            return make_response(body, 201)
+        else:
+            body = {"error": f"Artist {id} could not be deleted at this time."}
+
+
+api.add_resource(ArtistByID, "/artists/<int:id>")
+
+
+class AllAlbums(Resource):
+
+    def get(self):
+        albums = Albums.query.all()
+        body = [album.to_dict(rules=("-album_reviews",)) for album in albums]
+        return make_response(body, 200)
+
+    def post(self):
+        try:
+            new_album = Albums(
+                name=request.json.get("name"),
+                year=request.json.get("year"),
+                song=request.json.get("song"),
+                artist_name=request.json.get("artist_name"),
+            )
+            db.session.add(new_album)
+            db.session.commit()
+            body = new_album.to_dict(rules=("-album_reviews",))
+            return make_response(body, 201)
+        except:
+            body = {"error": "Album could not be created at this time."}
+            return make_response(body, 400)
+
+
+api.add_resource(AllAlbums, "/albums")
+
+
+class AlbumByID(Resource):
+
+    def get(self, id):
+        album = db.session.get(Albums, id)
+        if album:
+            try:
+                body = album.to_dict(rules=("-album_reviews",))
+                body["artist_association"] = [
+                    artist.to_dict(
+                        rules=("-artist_reviews",),
+                    )
+                    for artist in album.artist_association
+                ]
+                return make_response(body, 201)
+            except:
+                body = {"error": "Album could not be found."}
+                return make_response(body, 400)
+        else:
+            body = {"error": f"Album {id} was not found."}
+            return make_response(body, 400)
+
+    def patch(self, id):
+        album = db.session.get(Albums, id)
+        if album:
+            try:
+                for attr in request.json:
+                    setattr(album, attr, request.json[attr])
+                db.session.commit()
+                body = album.to_dict(rules=("-album_reviews",))
+                return make_response(body, 201)
+            except:
+                body = {"error": "Album could not be updated."}
+                return make_response(body, 400)
+        else:
+            body = {"error": f"Album {id} could not be updated."}
+            return make_response(body, 404)
+
+    def delete(self, id):
+        album = db.session.get(Albums, id)
+        if album:
+            db.session.delete(album)
+            db.session.commit()
+            body = {}
+            return make_response(body, 201)
+        else:
+            body = {"error": f"Album {id} could not be deleted."}
+            return make_response(body, 404)
+
+
+api.add_resource(AlbumByID, "/albums/<int:id>")
+
+
+class AllAlbumReviews(Resource):
+
+    def get(self):
+        reviews = AlbumReviews.query.all()
+        try:
+            body = [
+                review.to_dict(rules=("-artist.artist_reviews", "-album.album_reviews"))
+                for review in reviews
+            ]
+            return make_response(body, 200)
+        except:
+            body = {"error": "Album Reviews could not be found"}
+            return make_response(body, 404)
+
+    def post(self):
+        try:
+            new_review = AlbumReviews(
+                rating=request.json.get("rating"),
+                text=request.json.get("text"),
+                album_id=request.json.get("album_id"),
+                artist_id=request.json.get("artist_id"),
+            )
+            db.session.add(new_review)
+            db.session.commit()
+            body = new_review.to_dict(
+                rules=("-artist.artist_reviews", "-album.album_reviews")
+            )
+            return make_response(body, 201)
+        except:
+            body = {"Error": "Review could not be made."}
+            return make_response(body, 400)
+
+
+api.add_resource(AllAlbumReviews, "/albumreviews")
+
+
+class AlbumReviewByID(Resource):
+
+    def get(self, id):
+        review = db.session.get(AlbumReviews, id)
+        if review:
+            try:
+                body = review.to_dict(
+                    rules=("-album.album_reviews", "-artist.artist_reviews")
+                )
+                return make_response(body, 200)
+            except:
+                body = {"error": "Reviews could not be found"}
+                return make_response(body, 404)
+        else:
+            body = {"error": f"Review {id} could not be found."}
+            return make_response(body, 404)
+
+    def patch(self, id):
+        review = db.session.get(AlbumReviews, id)
+        if review:
+            try:
+                for attr in request.json:
+                    setattr(review, attr, request.json[attr])
+                db.session.commit()
+                body = review.to_dict(
+                    rules=("-album.album_reviews", "-artist.artist_reviews")
+                )
+                return make_response(body, 201)
+            except:
+                body = {"error": "Review could not be updated."}
+                return make_response(body, 400)
+        else:
+            body = {"error": f"Review {id} could not be updated at this time."}
+            return make_response(body, 400)
+
+    def delete(self, id):
+        review = db.session.get(AlbumReviews, id)
+        if review:
+            db.session.delete(review)
+            db.session.commit()
+            body = {}
+            return make_response(body, 204)
+        else:
+            body = {"error": f"Review {id} could not be deleted at this time."}
+            return make_response(body, 404)
+
+
+api.add_resource(AlbumReviewByID, "/albumreviews/<int:id>")
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True)
