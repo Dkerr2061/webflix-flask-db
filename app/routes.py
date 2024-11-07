@@ -672,6 +672,7 @@ class AllAlbums(Resource):
                 name=request.json.get("name"),
                 year=request.json.get("year"),
                 song=request.json.get("song"),
+                cover=request.json.get("cover"),
                 artist_name=request.json.get("artist_name"),
             )
             db.session.add(new_album)

@@ -1,3 +1,4 @@
+from sqlalchemy import Nullable
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import validates
@@ -153,6 +154,7 @@ class Albums(db.Model, SerializerMixin):
     name = db.Column(db.String, unique=True)
     year = db.Column(db.Integer, nullable=False)
     song = db.Column(db.String, nullable=False)
+    cover = db.Column(db.String)
     artist_name = db.Column(db.String, nullable=False)
 
     # 1-to-many relationship between the albums and albumreviews tables.
